@@ -501,6 +501,24 @@ def pick_tun_networks_v6():
     return [tun1, tun2]
 
 
+def get_duplicate_cn():
+    duplicate_cn = get_config("duplicate-cn")
+    if duplicate_cn:
+        return strtobool(duplicate_cn.lower())
+    else:
+        set_config("duplicate-cn", "True")
+        return True
+
+
+def get_push_dns():
+    push_dns = get_config("push-dns")
+    if push_dns:
+        return strtobool(push_dns.lower())
+    else:
+        set_config("push-dns", "True")
+        return True
+
+
 def get_push_default_gateway():
     push_default_gateway = get_config("push-default-gateway")
     if push_default_gateway:
@@ -640,10 +658,11 @@ def create_server_config(result_dir, status_dir):
         'data_dir': result_dir,
         'dh': get_dh_params_path(result_dir),
         'status_file_path': "{}/tcp-server-status.log".format(status_dir),
+        'ipv6_support': ipv6_support,
         'protocol': "tcp-server",
         'port': tcp_port,
-        'duplicate_cn': True,
-        'push_dns': True,
+        'duplicate_cn': get_duplicate_cn(),
+        'push_dns': get_push_dns(),
         'push_default_gateway': get_push_default_gateway(),
         # Default to OpenDNS when no nameservers were found
         'dns_servers': dns_info.get('nameservers', ["208.67.222.222", "208.67.220.220"]),
