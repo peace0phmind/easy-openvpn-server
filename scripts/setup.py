@@ -86,7 +86,7 @@ def create_ca(result_dir):
         datetime.datetime.utcnow() + datetime.timedelta(days=36500)
     ).add_extension(
         x509.BasicConstraints(ca=True, path_length=None), critical=True,
-    # Sign the certificate with the CA private key (self-signed)
+        # Sign the certificate with the CA private key (self-signed)
     ).sign(ca_key, hashes.SHA256(), default_backend())
     # Write the certificate out to disk.
     with open("{}/ca.crt".format(result_dir), "wb") as f:
@@ -151,7 +151,7 @@ def create_server_cert(result_dir):
         # TODO: try to remove this.
         x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
         critical=False,
-    # Sign the certificate with ca key
+        # Sign the certificate with ca key
     ).sign(ca_key, hashes.SHA256(), default_backend())
     # Write the certificate out to disk.
     with open("{}/server.crt".format(result_dir), "wb") as f:
@@ -217,11 +217,11 @@ def create_client_cert(result_dir, client_name):
     ).add_extension(
         x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]),
         critical=True,
-    # Sign the certificate with ca key
+        # Sign the certificate with ca key
     ).sign(ca_key, hashes.SHA256(), default_backend())
     # Write the certificate out to disk.
     with open("{}/client-configs/{}.crt".format(result_dir, client_name), "wb") as f:
-        f.write(cert.public_bytes(serialization.Encoding.PEM))    
+        f.write(cert.public_bytes(serialization.Encoding.PEM))
 
 
 def create_crl(result_dir):
@@ -242,22 +242,22 @@ def create_crl(result_dir):
     builder = builder.next_update(datetime.datetime.utcnow() + datetime.timedelta(days=36500))
     builder = builder.issuer_name(ca_cert.issuer)
 
-    cert_revocation_list = builder.sign(private_key=ca_key,algorithm=hashes.SHA256(),backend=default_backend())
+    cert_revocation_list = builder.sign(private_key=ca_key, algorithm=hashes.SHA256(), backend=default_backend())
 
-    with open("{}/crl.pem".format(result_dir),"wb") as f:
+    with open("{}/crl.pem".format(result_dir), "wb") as f:
         f.write(cert_revocation_list.public_bytes(serialization.Encoding.PEM))
 
 
 def revoke_client_cert(result_dir, client_name):
     if not os.path.isfile("{}/crl.pem".format(result_dir)):
         create_crl(result_dir)
-    
+
     # cert you want to revoke
     try:
-        cert_to_revoke_data = open("{}/client-configs/{}.crt".format(result_dir, client_name),"rb").read()
+        cert_to_revoke_data = open("{}/client-configs/{}.crt".format(result_dir, client_name), "rb").read()
     except FileNotFoundError:
         try:
-            cert_to_revoke_data = open("{}/client-configs/{}.crt.removed".format(result_dir, client_name),"rb").read()
+            cert_to_revoke_data = open("{}/client-configs/{}.crt.removed".format(result_dir, client_name), "rb").read()
         except FileNotFoundError:
             logging.warning("Could not find client certificate, can't revoke client.")
             return
@@ -272,7 +272,7 @@ def revoke_client_cert(result_dir, client_name):
         ca_key = load_pem_private_key(data, None, default_backend())
 
     # load crl
-    pem_crl_data = open("{}/crl.pem".format(result_dir),"rb").read()
+    pem_crl_data = open("{}/crl.pem".format(result_dir), "rb").read()
     crl = x509.load_pem_x509_crl(pem_crl_data, backend=default_backend())
 
     # generate a new crl object
@@ -282,7 +282,7 @@ def revoke_client_cert(result_dir, client_name):
     builder = builder.next_update(datetime.datetime.utcnow() + datetime.timedelta(days=36500))
 
     # add crl certificates from file to the new crl object
-    for i in range(0,len(crl)):    
+    for i in range(0, len(crl)):
         builder = builder.add_revoked_certificate(crl[i])
 
     # see if the cert to be revoked already in the list
@@ -296,14 +296,14 @@ def revoke_client_cert(result_dir, client_name):
             .revocation_date(datetime.datetime.utcnow())
             .build(backend=default_backend())
         )
-        
+
         builder = builder.add_revoked_certificate(revoked_cert)
     else:
         logging.warning("cert already revoked")
 
     # sign and save to new crl file
-    cert_revocation_list = builder.sign(private_key=ca_key,algorithm=hashes.SHA256(),backend=default_backend())
-    with open("{}/crl.pem".format(result_dir),"wb") as f:
+    cert_revocation_list = builder.sign(private_key=ca_key, algorithm=hashes.SHA256(), backend=default_backend())
+    with open("{}/crl.pem".format(result_dir), "wb") as f:
         f.write(cert_revocation_list.public_bytes(serialization.Encoding.PEM))
 
 
@@ -332,9 +332,9 @@ def get_dh_params_path(result_dir):
 def create_psk(result_dir):
     # Don't overwrite existing PSK because that will break existing client
     # config files.
-    if os.path.isfile("{}/ta.key".format(result_dir)):
+    if os.path.isfile("{}/tc.key".format(result_dir)):
         return
-    subprocess.check_call(["openvpn", "--genkey", "secret", "{}/ta.key".format(result_dir)])
+    subprocess.check_call(["openvpn", "--genkey", "secret", "{}/tc.key".format(result_dir)])
 
 
 #
@@ -350,7 +350,7 @@ def get_default_ip():
     '''
     try:
         output = subprocess.check_output(["ip", "-o", "route", "get", "1.1.1.1"],
-                                        universal_newlines=True)
+                                         universal_newlines=True)
     except subprocess.CalledProcessError:
         logging.fatal("No route available to 1.1.1.1. Please add a default gateway to this machine and try again.")
         click.Abort()
@@ -493,10 +493,10 @@ def pick_tun_networks_v6():
     '''
     ula = ip_network("fd00::/8")
     tun1 = IPv6Network((
-        ula.network_address + (random.getrandbits(64 - ula.prefixlen) << 64 ),
+        ula.network_address + (random.getrandbits(64 - ula.prefixlen) << 64),
         64))
     tun2 = IPv6Network((
-        ula.network_address + (random.getrandbits(64 - ula.prefixlen) << 64 ),
+        ula.network_address + (random.getrandbits(64 - ula.prefixlen) << 64),
         64))
     return [tun1, tun2]
 
@@ -508,6 +508,8 @@ def get_push_default_gateway():
     else:
         set_config("push-default-gateway", "True")
         return True
+
+
 #
 #
 # Snapcraft utility functions
@@ -536,6 +538,27 @@ def restart_daemons():
 #
 #
 
+def get_dev_mode():
+    dev_mode = get_dev_mode("dev-mode")
+
+    if not dev_mode:
+        dev_mode = "tun"
+
+    if dev_mode != "tun" and dev_mode != "tap":
+        dev_mode = "tun"
+
+    set_config("dev-mode", dev_mode)
+    return dev_mode
+
+
+def get_ipv6_support():
+    ipv6_support = get_config("ipv6-support")
+    if ipv6_support:
+        return strtobool(ipv6_support.lower())
+    else:
+        set_config("ipv6-support", "False")
+        return False
+
 
 def get_tun_networks(result_dir):
     '''Returns the network to use for the tunnel. Generates a new
@@ -545,7 +568,6 @@ def get_tun_networks(result_dir):
     udp_tun_network = get_config("internal.udp.tun-network")
     tcp_tun_network_v6 = get_config("internal.tcp.tun-network-v6")
     udp_tun_network_v6 = get_config("internal.udp.tun-network-v6")
-
 
     if tcp_tun_network and udp_tun_network and tcp_tun_network_v6 and udp_tun_network_v6:
         try:
@@ -577,13 +599,17 @@ def get_ports():
         set_config("udp-server.port", udp_port)
     return (tcp_port, udp_port)
 
+
 # def get_protocol():
 #     # decide whether to enable ipv6 support
 #     return "tcp6-server"
 
 def create_server_config(result_dir, status_dir):
+    dev_mode = get_dev_mode()
+    ipv6_support = get_ipv6_support()
     dns_info = get_dns_info()
-    (tcp_tunnel_network, udp_tunnel_network, tcp_tunnel_network_v6, udp_tunnel_network_v6) = get_tun_networks(result_dir)
+    (tcp_tunnel_network, udp_tunnel_network, tcp_tunnel_network_v6, udp_tunnel_network_v6) = get_tun_networks(
+        result_dir)
     (tcp_port, udp_port) = get_ports()
     dns_search_domains = dns_info.get('search', [])
     dns_search_domains += get_config("additional-search-domains").split()
@@ -609,12 +635,12 @@ def create_server_config(result_dir, status_dir):
             internal_networks.append(known_network)
 
     tcp_context = {
+        'dev_mode': dev_mode,
         'config_dir': result_dir,
         'data_dir': result_dir,
         'dh': get_dh_params_path(result_dir),
         'status_file_path': "{}/tcp-server-status.log".format(status_dir),
-        'servername': "easy-openvpn-server-1",
-        'protocol': "tcp6-server",
+        'protocol': "tcp-server",
         'port': tcp_port,
         'duplicate_cn': True,
         'push_dns': True,
@@ -627,9 +653,12 @@ def create_server_config(result_dir, status_dir):
         'tunnel_netmask': str(tcp_tunnel_network.netmask),
         'tunnel_network_v6': str(tcp_tunnel_network_v6),
     }
+    if ipv6_support:
+        tcp_context['protocol'] = "tcp6-server"
+
     import jinja2
     j2_env = Environment(
-        loader=FileSystemLoader(os.path.join(os.path.dirname(__file__),"../templates")),
+        loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), "../templates")),
         trim_blocks=True,
         lstrip_blocks=True,
         undefined=jinja2.StrictUndefined)
@@ -641,13 +670,15 @@ def create_server_config(result_dir, status_dir):
     udp_context = tcp_context
     udp_context['status_file_path'] = "{}/udp-server-status.log".format(status_dir)
     udp_context['port'] = udp_port
-    udp_context['protocol'] = "udp6"
+    udp_context['protocol'] = "udp"
     udp_context['tunnel_network'] = str(udp_tunnel_network.network_address)
     udp_context['tunnel_netmask'] = str(udp_tunnel_network.netmask)
     udp_context['tunnel_network_v6'] = str(udp_tunnel_network_v6)
+    if ipv6_support:
+        udp_context['protocol'] = "udp6"
 
     j2_env = Environment(
-        loader=FileSystemLoader(os.path.join(os.path.dirname(__file__),"../templates")),
+        loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), "../templates")),
         trim_blocks=True,
         lstrip_blocks=True)
     template = j2_env.get_template('server.conf')
@@ -671,8 +702,8 @@ def create_client_config(result_dir, name):
         client_cert_str = f.read()
     with open("{}/client-configs/{}.key".format(result_dir, name)) as f:
         client_key_str = f.read()
-    with open("{}/ta.key".format(result_dir)) as f:
-        ta_key_str = f.read()
+    with open("{}/tc.key".format(result_dir)) as f:
+        tc_key_str = f.read()
 
     (tcp_port, udp_port) = get_ports()
     context = {
@@ -683,10 +714,10 @@ def create_client_config(result_dir, name):
         'ca': ca_cert_str,
         'cert': client_cert_str,
         'key': client_key_str,
-        'tls_auth': ta_key_str,
+        'tls_crypt': tc_key_str,
     }
     j2_env = Environment(
-        loader=FileSystemLoader(os.path.join(os.path.dirname(__file__),"../templates")),                                                                                                                            
+        loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), "../templates")),
         trim_blocks=True,
         lstrip_blocks=True)
     template = j2_env.get_template('client.ovpn')
@@ -837,4 +868,4 @@ def remove_client(ctx, client_name):
 
 
 if __name__ == "__main__":
-    cli() #pylint: disable=E1123,E1120
+    cli()  # pylint: disable=E1123,E1120
