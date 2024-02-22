@@ -557,7 +557,7 @@ def restart_daemons():
 #
 
 def get_dev_mode():
-    dev_mode = get_dev_mode("dev-mode")
+    dev_mode = get_config("dev-mode")
     mode_changed = False
 
     if not dev_mode:
