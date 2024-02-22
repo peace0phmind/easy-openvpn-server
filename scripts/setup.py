@@ -558,14 +558,19 @@ def restart_daemons():
 
 def get_dev_mode():
     dev_mode = get_dev_mode("dev-mode")
+    mode_changed = False
 
     if not dev_mode:
-        dev_mode = "tun"
+        dev_mode = "tap"
+        mode_changed = True
 
     if dev_mode != "tun" and dev_mode != "tap":
         dev_mode = "tun"
+        mode_changed = True
 
-    set_config("dev-mode", dev_mode)
+    if mode_changed:
+        set_config("dev-mode", dev_mode)
+
     return dev_mode
 
 
@@ -576,6 +581,75 @@ def get_ipv6_support():
     else:
         set_config("ipv6-support", "False")
         return False
+
+
+def get_bridge_name():
+    bridge_name = get_config("bridge-name")
+    if not bridge_name:
+        bridge_name = "br0"
+        set_config("bridge-name", bridge_name)
+
+    return bridge_name
+
+
+def get_tap_list():
+    tap_list = get_config("tap-list")
+    if not tap_list:
+        tap_list = "tap0"
+        set_config("tap-list", tap_list)
+
+    return tap_list
+
+
+def get_device(device_name=None):
+    output = subprocess.check_output(['ip', 'route', 'show'], universal_newlines=True)
+    if device_name:
+        device = {'name': device_name}
+    else:
+        device = {}
+
+    for line in output.splitlines():
+        # Skip all tunnel and VPN-connected networks
+        words = line.split()
+        # Skip default gateways
+        if "name" not in device and words[0] == "default":
+            device['name'] = words[4]
+        else:
+            dev_idx = words.index('dev')
+            if dev_idx >= 0 and words[dev_idx + 1] == device['name']:
+                device['mask'] = words[0]
+                if 'src' in words:
+                    ip_idx = words.index('src')
+                    if ip_idx >= 0:
+                        device['ip'] = words[ip_idx + 1]
+                        return device
+    return None
+
+
+def get_tap_eth_name():
+    tap_eth_name = get_config("tap-eth-name")
+
+    device = {}
+
+    if not tap_eth_name:
+        device = get_device()
+        tap_eth_name = device['name']
+        set_config("tap-eth-name", tap_eth_name)
+    else:
+        device = get_device(tap_eth_name)
+
+    set_config("tap-eth-ip", device['ip'])
+    ip_mask = ip_network(device['mask'])
+    set_config("tap-eth-netmask", ip_mask.netmask)
+    set_config("tap-eth-broadcast", ip_mask.broadcast_address)
+
+    return tap_eth_name
+
+
+def init_tap_params():
+    get_bridge_name()
+    get_tap_list()
+    get_tap_eth_name()
 
 
 def get_tun_networks(result_dir):
@@ -812,6 +886,7 @@ def setup(ctx):
     """Initialises OpenVPN config files, keys and CA.
     """
     logging.info("Generating config for vpn daemons.")
+    init_tap_params()
     create_ca(ctx.obj["result_dir"])
     create_crl(ctx.obj["result_dir"])
     create_psk(ctx.obj["result_dir"])
