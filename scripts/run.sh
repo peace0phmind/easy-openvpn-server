@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 if [ "$EUID" -ne 0 ]; then
   echo "Error: please run as root!"

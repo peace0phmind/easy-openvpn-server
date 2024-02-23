@@ -586,7 +586,7 @@ def get_ipv6_support():
 def get_bridge_name():
     bridge_name = get_config("bridge-name")
     if not bridge_name:
-        bridge_name = "br0"
+        bridge_name = "vpnbridge"
         set_config("bridge-name", bridge_name)
 
     return bridge_name
