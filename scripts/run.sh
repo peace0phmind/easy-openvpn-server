@@ -135,6 +135,8 @@ else
     for t in $tap; do
       openvpn --rmtun --dev $t
     done
+
+    ifconfig $eth $eth_ip
   }
   trap cleanup_tap EXIT
 fi
