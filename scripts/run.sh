@@ -137,6 +137,7 @@ else
     done
 
     ifconfig $eth $eth_ip
+    netplan apply
   }
   trap cleanup_tap EXIT
 fi
