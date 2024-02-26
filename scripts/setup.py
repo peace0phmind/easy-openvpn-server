@@ -800,7 +800,9 @@ def create_client_config(result_dir, name):
         tc_key_str = f.read()
 
     (tcp_port, udp_port) = get_ports()
+    dev_mode = get_dev_mode()
     context = {
+        'dev_mode': dev_mode,
         'tcp_port': tcp_port,
         'udp_port': udp_port,
         'protocol': "tcp",
