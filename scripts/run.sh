@@ -85,6 +85,7 @@ else
   TAP_LIST=$(get_snap_parameter "tap-list")
   TAP_ETH_NAME=$(get_snap_parameter "tap-eth-name")
   TAP_ETH_IP=$(get_snap_parameter "tap-eth-ip")
+  TAP_ETH_GW=$(get_snap_parameter "tap-eth-gw")
   TAP_ETH_NETMASK=$(get_snap_parameter "tap-eth-netmask")
   TAP_ETH_BROADCAST=$(get_snap_parameter "tap-eth-broadcast")
 
@@ -121,6 +122,8 @@ else
 
   ifconfig $br $eth_ip netmask $eth_netmask broadcast $eth_broadcast
 
+  route add default gw $TAP_ETH_GW dev $br
+
   function cleanup_tap {
     echo Cleaning up...
     # Define Bridge Interface
@@ -137,7 +140,8 @@ else
     done
 
     ifconfig $eth $eth_ip
-    netplan apply
+
+    route add default gw $TAP_ETH_GW dev $eth
   }
   trap cleanup_tap EXIT
 fi

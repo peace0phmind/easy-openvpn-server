@@ -613,8 +613,12 @@ def get_device(device_name=None):
         # Skip all tunnel and VPN-connected networks
         words = line.split()
         # Skip default gateways
-        if "name" not in device and words[0] == "default":
-            device['name'] = words[4]
+        if words[0] == "default":
+            if "name" not in device:
+                device['name'] = words[4]
+
+            if 'via' in words:
+                device['gw'] = words[words.index('via') + 1]
         else:
             dev_idx = words.index('dev')
             if dev_idx >= 0 and words[dev_idx + 1] == device['name']:
@@ -641,6 +645,7 @@ def get_tap_eth_name():
 
     if device:
         set_config("tap-eth-ip", device['ip'])
+        set_config("tap-eth-gw", device['gw'])
         ip_mask = ip_network(device['mask'])
         set_config("tap-eth-netmask", ip_mask.netmask)
         set_config("tap-eth-broadcast", ip_mask.broadcast_address)
