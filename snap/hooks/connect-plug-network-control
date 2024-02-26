@@ -4,4 +4,4 @@ set -e
 touch $SNAP_USER_DATA/internal.network-control-connected
 
 snapctl restart easy-openvpn-server.tcp-server
-snapctl restart easy-openvpn-server.udp-server
+#snapctl restart easy-openvpn-server.udp-server
