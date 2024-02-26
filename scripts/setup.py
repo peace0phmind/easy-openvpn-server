@@ -639,10 +639,11 @@ def get_tap_eth_name():
     else:
         device = get_device(tap_eth_name)
 
-    set_config("tap-eth-ip", device['ip'])
-    ip_mask = ip_network(device['mask'])
-    set_config("tap-eth-netmask", ip_mask.netmask)
-    set_config("tap-eth-broadcast", ip_mask.broadcast_address)
+    if device:
+        set_config("tap-eth-ip", device['ip'])
+        ip_mask = ip_network(device['mask'])
+        set_config("tap-eth-netmask", ip_mask.netmask)
+        set_config("tap-eth-broadcast", ip_mask.broadcast_address)
 
     return tap_eth_name
 
