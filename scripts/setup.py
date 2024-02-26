@@ -547,7 +547,7 @@ def set_config(key, value):
 
 def restart_daemons():
     subprocess.check_call(['snapctl', 'restart', "easy-openvpn-server.tcp-server"])
-    subprocess.check_call(['snapctl', 'restart', "easy-openvpn-server.udp-server"])
+    # subprocess.check_call(['snapctl', 'restart', "easy-openvpn-server.udp-server"])
 
 
 #
